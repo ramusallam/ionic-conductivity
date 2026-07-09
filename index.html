@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ionic Conductivity</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto+Mono:wght@400;700&family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Spark Learning companion tokens */
+    --bgMain: #F7F3EE;
+    --bgPanel: #FFFFFF;
+    --bgCard: #FFFFFF;
+    --accentBlue: #6366f1;
+    --accentBlueHover: #4f46e5;
+    --accentPurple: #a855f7;
+    --accentGreen: #10b981;
+    --accentRed: #ef4444;
+    --accentYellow: #f59e0b;
+    --textPrimary: #1C1917;
+    --textSecondary: #57534E;
+    --textWarm: #2A2520;
+    --textWarmSecondary: #7C6F5A;
+    --textWarmMuted: #A0937B;
+    --borderColor: #E8E0D2;
+    --borderSubtle: #F0EBE3;
+    --shadow-sm: 0 1px 2px rgba(17,17,17,0.04), 0 1px 3px rgba(17,17,17,0.06);
+    --shadow-md: 0 4px 12px rgba(17,17,17,0.06), 0 2px 4px rgba(17,17,17,0.04);
+    --shadow-lg: 0 16px 40px rgba(17,17,17,0.10), 0 4px 12px rgba(17,17,17,0.06);
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Roboto Serif', Georgia, Cambria, serif;
+    --font-mono: 'Roboto Mono', monospace;
+    /* preserved student-copy note artifact */
+    --note-bg: #fdf1c6;
+    --note-ink: #2a1e08;
+    --note-head: #7a3a00;
+    /* domain colors */
+    --cation: #d97706;   /* K+  */
+    --anion: #0d9488;    /* Cl- */
+    --current: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bgMain);
+    color: var(--textPrimary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    padding: 12px 32px 8px;
+    max-width: 1340px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  header .titles .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accentBlue);
+    margin-bottom: 3px;
+  }
+  header .titles h1 {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--textWarm);
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+  .step-indicator {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--textWarmMuted);
+    white-space: nowrap;
+  }
+  .progress-track {
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  .progress-track .bar {
+    height: 4px;
+    background: var(--borderSubtle);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-track .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accentBlue), var(--accentPurple));
+    border-radius: 999px;
+    transition: width 350ms ease;
+  }
+  .step-line { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 8px; }
+  .step-line .now { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .step-line .num {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--accentBlue); white-space: nowrap;
+  }
+  .step-line .ttl {
+    font-family: var(--font-serif); font-size: 14px; font-weight: 700; color: var(--textWarm);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .step-line .count {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.12em; color: var(--textWarmMuted); white-space: nowrap;
+  }
+  main {
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 12px 32px 20px;
+  }
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.92fr);
+    gap: 26px;
+    align-items: start;
+  }
+  /* ---- stage (what students SEE) ---- */
+  .stage {
+    background: var(--bgCard);
+    border: 1px solid var(--borderColor);
+    border-top: 4px solid var(--accentBlue);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    padding: 16px 18px;
+    min-height: 440px;
+    display: flex;
+    flex-direction: column;
+    animation: fadeUp 0.4s ease-out;
+  }
+  .stage-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accentBlue);
+    margin-bottom: 12px;
+  }
+  .stage-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+  canvas { display: block; width: 100%; height: auto; border-radius: 12px; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- side (what students WRITE) ---- */
+  .side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 12px; }
+  .notes-card {
+    background: var(--note-bg);
+    color: var(--note-ink);
+    padding: 16px 22px 14px;
+    border-radius: 14px;
+    font-size: 15px;
+    line-height: 1.58;
+    box-shadow: var(--shadow-sm);
+    animation: fadeUp 0.4s ease-out;
+  }
+  .notes-card .nc-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--note-head);
+    margin-bottom: 6px;
+  }
+  .step-heading {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--note-head);
+    margin-bottom: 6px;
+  }
+  .notes-card p { margin: 0; }
+  .notes-card strong { font-weight: 700; color: var(--note-ink); }
+
+  .notebook-prompt {
+    background: #fff;
+    border: 1px solid var(--borderColor);
+    border-left: 4px solid var(--accentBlue);
+    border-radius: 12px;
+    padding: 13px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--textSecondary);
+    box-shadow: var(--shadow-sm);
+  }
+  .notebook-prompt .np-tag {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 4px 8px;
+    background: var(--accentBlue);
+    color: #fff;
+    border-radius: 6px;
+    margin-top: 1px;
+  }
+  .notebook-prompt strong { color: var(--textPrimary); font-weight: 700; }
+
+  nav {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 4px;
+  }
+  button {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--borderColor);
+    background: #fff;
+    color: var(--textPrimary);
+    cursor: pointer;
+    transition: background 140ms, border-color 140ms, transform 50ms, box-shadow 140ms;
+  }
+  button:hover:not(:disabled) { background: var(--bgMain); border-color: var(--textWarmMuted); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+  button.primary {
+    background: var(--accentBlue);
+    color: #fff;
+    border-color: var(--accentBlue);
+    box-shadow: 0 4px 14px rgba(99,102,241,0.28);
+  }
+  button.primary:hover:not(:disabled) { background: var(--accentBlueHover); border-color: var(--accentBlueHover); }
+  .btn-group { display: flex; gap: 10px; }
+
+  /* ---- shared interactive bits ---- */
+  .tool-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--borderColor);
+    background: #fff;
+    color: var(--textPrimary);
+    cursor: pointer;
+    transition: all 140ms;
+  }
+  .chip:hover { border-color: var(--accentBlue); }
+  .chip.active { background: var(--accentBlue); color: #fff; border-color: var(--accentBlue); }
+  .readout {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .eyebrow-sm {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--textWarmMuted);
+  }
+
+  /* difficulty pills on practice questions */
+  .diff-pill {
+    display: inline-block; font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px;
+  }
+  .q-card .q-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .diff-simple { color: #166534; background: rgba(16,185,129,0.14); }
+  .diff-challenge { color: #9a3412; background: rgba(245,158,11,0.16); }
+
+  /* data table (lab-style) */
+  table.data { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.data th {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--textWarmMuted); font-weight: 700; padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--borderColor);
+  }
+  table.data td { padding: 9px 6px; text-align: center; border-bottom: 1px solid var(--borderSubtle); font-weight: 600; }
+  table.data td.st { font-family: var(--font-serif); font-size: 15px; font-weight: 700; color: var(--textWarm); text-align: left; }
+  .tag-yes { color: #166534; background: rgba(16,185,129,0.14); padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .tag-no  { color: #9a3412; background: rgba(239,68,68,0.12); padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+
+  /* reveal pattern (practice solutions) */
+  .reveal-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--accentBlue); color: #fff; border: none; border-radius: 999px;
+    font-weight: 700; font-size: 13px; padding: 8px 15px; cursor: pointer;
+  }
+  .reveal-btn:hover { background: var(--accentBlueHover); }
+  .reveal-content {
+    margin-top: 10px; padding: 12px 14px; background: var(--bgMain);
+    border: 1px solid var(--borderColor); border-left: 4px solid var(--accentGreen);
+    border-radius: 10px; font-size: 14px; line-height: 1.55; color: var(--textPrimary);
+    animation: fadeUp 0.25s ease-out;
+  }
+  .reveal-content[hidden] { display: none !important; }
+  .q-card { background: #fff; border: 1px solid var(--borderColor); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow-sm); cursor: pointer; }
+  .q-card + .q-card { margin-top: 12px; }
+  .q-card .q-text { font-weight: 600; font-size: 14.5px; margin-bottom: 10px; }
+  .q-num { font-family: var(--font-mono); color: var(--accentBlue); font-weight: 700; margin-right: 6px; }
+
+  .pb-progress { margin-top: 4px; }
+  .pb-bar { height: 5px; background: var(--borderSubtle); border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
+  .pb-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accentBlue), var(--accentGreen)); transition: width 300ms ease; }
+  .pb-text { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--textWarmMuted); }
+  .pb-text.complete { color: #166534; }
+
+  .hint { font-size: 12px; color: var(--textWarmMuted); text-align: center; font-style: italic; }
+  .caption { font-style: italic; font-size: 12px; color: var(--textWarmMuted); text-align: center; }
+  .status-line { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--textPrimary); text-align: center; line-height: 1.45; min-height: 22px; }
+  .status-line.complete { color: #166534; }
+  button svg, .status-line svg { vertical-align: -2px; }
+
+  @media (max-width: 980px) {
+    .workspace { grid-template-columns: 1fr; }
+    .stage { min-height: 380px; }
+    .side { position: static; }
+    header, main { padding-left: 16px; padding-right: 16px; }
+    .progress-track { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="titles">
+    <div class="eyebrow">Chemistry</div>
+    <h1>Ionic Conductivity</h1>
+  </div>
+</header>
+<div class="progress-track">
+  <div class="step-line">
+    <span class="now"><span class="num" id="stepNum">Step 01</span><span class="ttl" id="stepTitle"></span></span>
+    <span class="count" id="stepIndicator">01 / 12</span>
+  </div>
+  <div class="bar"><div class="fill" id="progressFill"></div></div>
+</div>
+
+<main>
+  <div class="workspace">
+    <div class="stage">
+      <div class="stage-label" id="stageLabel">What you see</div>
+      <div class="stage-body" id="stage"></div>
+    </div>
+
+    <div class="side">
+      <div class="notes-card">
+        <div class="nc-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Copy Into Your Notes</div>
+        <div class="step-heading" id="stepHeading"></div>
+        <p id="notes"></p>
+      </div>
+      <div class="notebook-prompt">
+        <div class="np-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>DO</div>
+        <div id="notebookText"></div>
+      </div>
+      <nav>
+        <button id="resetBtn">Start Over</button>
+        <div class="btn-group">
+          <button id="prevBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg> Back</button>
+          <button id="nextBtn" class="primary">Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+      </nav>
+    </div>
+  </div>
+</main>
+
+<script>
+// =====================================================
+//  Helpers
+// =====================================================
+const $ = (sel, root=document) => root.querySelector(sel);
+function el(tag, attrs={}, kids=[]) {
+  const n = document.createElement(tag);
+  for (const k in attrs) {
+    if (k === 'class') n.className = attrs[k];
+    else if (k === 'html') n.innerHTML = attrs[k];
+    else if (k.startsWith('on') && typeof attrs[k] === 'function') n.addEventListener(k.slice(2), attrs[k]);
+    else n.setAttribute(k, attrs[k]);
+  }
+  (Array.isArray(kids) ? kids : [kids]).forEach(c => { if (c != null) n.append(c.nodeType ? c : document.createTextNode(c)); });
+  return n;
+}
+function makeCanvas(stage, w, h) {
+  const c = el('canvas');
+  c.width = w; c.height = h;
+  c.style.maxWidth = (w) + 'px';
+  c.style.margin = '0 auto';
+  stage.append(c);
+  return { c, ctx: c.getContext('2d') };
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+// one shared set of Lucide line icons (never glyph arrows) for buttons and status lines
+const icn = (path, size=14, sw=2) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+const ICON = {
+  right: icn('<path d="m9 18 6-6-6-6"/>'),
+  zap: icn('<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>'),
+  heat: icn('<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>'),
+  drop: icn('<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>'),
+  heart: icn('<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>'),
+  replay: icn('<path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.7 3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.7-3L3 16"/><path d="M3 21v-5h5"/>')
+};
+
+// =====================================================
+//  Animation loop (current scene may register a tick)
+// =====================================================
+let currentTick = null;
+let lastTs = null;
+function loop(ts) {
+  if (lastTs == null) lastTs = ts;
+  const dt = Math.min(50, ts - lastTs);
+  lastTs = ts;
+  if (currentTick) currentTick(dt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// =====================================================
+//  Ion + circuit renderers (one shared helper per idea)
+// =====================================================
+const IONC = {
+  K:  { fill:'#d97706', lite:'#fbbf24', glow:'217,119,6',  lab:'K',  sign:'+' },
+  Cl: { fill:'#0d9488', lite:'#5eead4', glow:'13,148,136', lab:'Cl', sign:'–' }
+};
+function drawIon(ctx, x, y, kind, r=14) {
+  const C = IONC[kind];
+  const gg = ctx.createRadialGradient(x, y, 0, x, y, r+9);
+  gg.addColorStop(0, `rgba(${C.glow},0.30)`); gg.addColorStop(1, `rgba(${C.glow},0)`);
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(x, y, r+9, 0, Math.PI*2); ctx.fill();
+  const g = ctx.createRadialGradient(x-r*0.35, y-r*0.35, 1, x, y, r);
+  g.addColorStop(0, C.lite); g.addColorStop(1, C.fill);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `700 ${Math.round(r*0.78)}px Roboto Mono, monospace`;
+  ctx.fillText(C.lab, x - (kind==='Cl'? r*0.14 : 0), y);
+  ctx.font = `700 ${Math.round(r*0.6)}px Roboto Mono, monospace`;
+  ctx.fillText(C.sign, x + r*0.62 + (kind==='Cl'? r*0.2 : 0), y - r*0.55);
+}
+function drawBulb(ctx, x, y, b) {
+  b = Math.max(0, Math.min(1, b));
+  if (b > 0.03) {
+    const gr = ctx.createRadialGradient(x, y, 0, x, y, 52*b+8);
+    gr.addColorStop(0, `rgba(251,191,36,${0.6*b})`); gr.addColorStop(1, 'rgba(251,191,36,0)');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, 52*b+8, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle = b > 0.05 ? `rgba(254,243,199,${0.55+0.45*b})` : '#f1ede6';
+  ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#78716c'; roundRect(ctx, x-7, y+14, 14, 11, 2); ctx.fill();
+  ctx.strokeStyle = b > 0.05 ? `rgb(255,${Math.round(170+70*b)},50)` : '#cbc4b8'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x-6, y+3); ctx.lineTo(x-2, y-6); ctx.lineTo(x+2, y+2); ctx.lineTo(x+6, y-6); ctx.stroke();
+}
+function wire(ctx, pts, live) {
+  ctx.strokeStyle = live ? 'var(--current)' : '#9ca3af';
+  ctx.strokeStyle = live ? '#f59e0b' : '#9ca3af';
+  ctx.lineWidth = 3; ctx.lineJoin = 'round';
+  ctx.beginPath(); pts.forEach((p,i)=> i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1])); ctx.stroke();
+}
+function drawWaterMol(ctx, x, y, a=0.9) {
+  ctx.globalAlpha = a;
+  ctx.fillStyle = '#93c5fd'; ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#dbeafe';
+  ctx.beginPath(); ctx.arc(x-4, y-3.4, 2.4, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x+4, y-3.4, 2.4, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+}
+// shared free-ion wander with optional pull toward an electrode x
+function driftFree(p, dt, bounds, pullX) {
+  p.vx = (p.vx||0) + (Math.random()-0.5)*0.26;
+  p.vy = (p.vy||0) + (Math.random()-0.5)*0.26;
+  if (pullX != null) p.vx += (pullX - p.x) * 0.0011;
+  p.vx *= 0.93; p.vy *= 0.93;
+  p.x += p.vx*dt*0.12; p.y += p.vy*dt*0.12;
+  const [l,r,t,b] = bounds;
+  if (p.x < l) { p.x = l; p.vx = Math.abs(p.vx)*0.6; }
+  if (p.x > r) { p.x = r; p.vx = -Math.abs(p.vx)*0.6; }
+  if (p.y < t) { p.y = t; p.vy = Math.abs(p.vy)*0.6; }
+  if (p.y > b) { p.y = b; p.vy = -Math.abs(p.vy)*0.6; }
+}
+
+// shared test-rig (battery -> bulb -> electrodes in a beaker)
+const RIG = { bkL:70, bkR:300, bkTop:118, bkBot:302, lE:118, rE:252, eTop:104, eBot:252,
+              sL:90, sR:280, sTop:150, sBot:292, bulb:[432,60] };
+function drawRig(ctx, bright, live) {
+  live = live || bright > 0.05;
+  // beaker
+  ctx.fillStyle = '#eef2f7'; roundRect(ctx, RIG.bkL, RIG.bkTop, RIG.bkR-RIG.bkL, RIG.bkBot-RIG.bkTop, 14); ctx.fill();
+  ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2.5; roundRect(ctx, RIG.bkL, RIG.bkTop, RIG.bkR-RIG.bkL, RIG.bkBot-RIG.bkTop, 14); ctx.stroke();
+  // wires
+  wire(ctx, [[190,41],[118,41],[118,RIG.eTop]], live);
+  wire(ctx, [[300,41],[432,41]], live);
+  wire(ctx, [[432,78],[432,92],[252,92],[252,RIG.eTop]], live);
+  // electrodes
+  ctx.fillStyle = '#94a3b8';
+  roundRect(ctx, RIG.lE-6, RIG.eTop, 12, RIG.eBot-RIG.eTop, 4); ctx.fill();
+  roundRect(ctx, RIG.rE-6, RIG.eTop, 12, RIG.eBot-RIG.eTop, 4); ctx.fill();
+  ctx.font = '700 16px Roboto Mono, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#60a5fa'; ctx.fillText('–', RIG.lE, RIG.eTop-13);
+  ctx.fillStyle = '#f87171'; ctx.fillText('+', RIG.rE, RIG.eTop-13);
+  // battery
+  ctx.fillStyle = '#44403c'; roundRect(ctx, 190, 26, 110, 30, 6); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '700 12px Roboto Mono, monospace';
+  ctx.fillText('9V', 245, 41);
+  ctx.fillStyle = '#f87171'; ctx.fillText('+', 291, 41);
+  ctx.fillStyle = '#60a5fa'; ctx.fillText('–', 199, 41);
+  // bulb
+  drawBulb(ctx, RIG.bulb[0], RIG.bulb[1], bright);
+}
+
+// =====================================================
+//  SCENES
+// =====================================================
+const scenes = [];
+
+// ---- Step 1: Bridge from the Conductivity Lab ----
+scenes.push({
+  step: 'Step 1: From the Conductivity Lab',
+  seeLabel: 'Conductivity test bench',
+  heading: 'Step 1: What Happened in the Lab',
+  notes: "In the lab you tested <strong>potassium chloride (KCl)</strong> in three states. <strong>Solid</strong> KCl did not conduct. <strong>Molten</strong> (melted) and <strong>aqueous</strong> (dissolved) KCl both did. KCl is built from charged ions, <strong>K<sup style=\"font-size:0.68em\">+</sup></strong> and <strong>Cl<sup style=\"font-size:0.68em\">–</sup></strong>. A current only flows when those ions are <strong>free to move</strong> and drift to the electrodes.",
+  notebook: "<strong>Before you test</strong>, predict: which of the three states will light the bulb? Then pick each state and press <strong>Close the circuit</strong>. Watch whether the ions can move, and record the conductivity (<strong>High</strong> or <strong>None</strong>) for solid, molten, and aqueous, just like your lab table.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 330);
+    let active = 'solid', closed = false, bright = 0;
+    let ions = [];
+    function layout() {
+      ions = [];
+      if (active === 'solid') {
+        const cols = 5, rows = 4, x0 = 112, y0 = 172, dx = 32, dy = 30;
+        for (let r=0;r<rows;r++) for (let col=0;col<cols;col++) {
+          const kind = ((r+col)%2===0) ? 'K' : 'Cl';
+          const x = x0+col*dx, y = y0+r*dy;
+          ions.push({ kind, hx:x, hy:y, x, y, ph:Math.random()*6.28 });
+        }
+      } else {
+        for (let i=0;i<9;i++){ ions.push(free('K')); ions.push(free('Cl')); }
+      }
+    }
+    function free(kind){ return { kind, x:RIG.sL+18+Math.random()*(RIG.sR-RIG.sL-36), y:RIG.sTop+14+Math.random()*(RIG.sBot-RIG.sTop-28), vx:(Math.random()-.5)*0.5, vy:(Math.random()-.5)*0.5 }; }
+    const status = el('div',{class:'status-line'});
+    function setStatus(){
+      const name = active==='solid'?'Solid KCl':active==='molten'?'Molten KCl':'Aqueous KCl';
+      if (!closed){ status.innerHTML = `<strong>${name}</strong>. Press <strong>Close the circuit</strong> to test it.`; return; }
+      if (active==='solid') status.innerHTML = 'No current. The ions are <strong>locked in the lattice</strong>, so the bulb stays dark.';
+      else if (active==='molten') status.innerHTML = 'Current flows. <strong>Free ions</strong> drift to the electrodes and the bulb glows.';
+      else status.innerHTML = 'Current flows. Water <strong>freed the ions</strong>, so they carry the charge.';
+    }
+    const chips = el('div',{class:'tool-row'}, ['solid','molten','aqueous'].map(k => el('button',{
+      class:'chip'+(k===active?' active':''), 'data-k':k,
+      onclick(){ active=k; closed=false; layout(); chips.querySelectorAll('.chip').forEach(ch=>ch.classList.toggle('active',ch.dataset.k===k)); setStatus(); closeBtn.innerHTML='Close the circuit '+ICON.zap; }
+    }, k[0].toUpperCase()+k.slice(1))));
+    const closeBtn = el('button',{class:'primary',html:'Close the circuit '+ICON.zap});
+    closeBtn.addEventListener('click',()=>{ closed=!closed; closeBtn.innerHTML=(closed?'Open the circuit ':'Close the circuit ')+ICON.zap; setStatus(); });
+    layout();
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,330);
+      const conducts = closed && active!=='solid';
+      bright += ((conducts?1:0) - bright) * Math.min(1, dt/260);
+      drawRig(ctx, bright, closed);
+      // state tint inside beaker
+      if (active==='aqueous'){ ctx.fillStyle='rgba(147,197,253,0.18)'; roundRect(ctx,RIG.bkL+3,RIG.bkTop+34,RIG.bkR-RIG.bkL-6,RIG.bkBot-RIG.bkTop-37,10); ctx.fill(); }
+      if (active==='molten'){ ctx.fillStyle='rgba(249,115,22,0.13)'; roundRect(ctx,RIG.bkL+3,RIG.bkTop+34,RIG.bkR-RIG.bkL-6,RIG.bkBot-RIG.bkTop-37,10); ctx.fill(); }
+      if (active==='aqueous') for (let i=0;i<10;i++){ drawWaterMol(ctx, RIG.sL+20+((i*57)%(RIG.sR-RIG.sL-30)), RIG.sTop+24+((i*43)%(RIG.sBot-RIG.sTop-40)), 0.5); }
+      const b = [RIG.sL+12, RIG.sR-12, RIG.sTop+10, RIG.sBot-10];
+      ions.forEach(p => {
+        if (active==='solid'){ p.ph += dt*0.011; p.x = p.hx + Math.sin(p.ph)*1.7; p.y = p.hy + Math.cos(p.ph*1.3)*1.7; }
+        else driftFree(p, dt, b, closed ? (p.kind==='K'?RIG.lE:RIG.rE) : null);
+        drawIon(ctx, p.x, p.y, p.kind, 12);
+      });
+    };
+    stage.append(chips, el('div',{class:'tool-row',style:'margin-top:2px'},[closeBtn]), status,
+      el('div',{class:'caption'},'Test all three states, exactly like the conductivity bench. Only free-moving ions light the bulb.'));
+    setStatus();
+  }
+});
+
+// ---- Step 2: What KCl Is (ionic bonding) ----
+scenes.push({
+  step: 'Step 2: Ionic Bonding',
+  seeLabel: 'Electron transfer',
+  heading: 'Step 2: What KCl Is',
+  notes: "KCl is an <strong>ionic compound</strong>: a metal (potassium) bonded to a nonmetal (chlorine). Potassium <strong>gives away</strong> its 1 outer electron to become <strong>K<sup style=\"font-size:0.68em\">+</sup></strong>. Chlorine <strong>takes</strong> it to fill its shell and becomes <strong>Cl<sup style=\"font-size:0.68em\">–</sup></strong>. Opposite charges attract, and that pull is the <strong>ionic bond</strong>. Remember: the ions are charged, but here they are still <strong>locked together</strong>.",
+  notebook: "<strong>Before you press Transfer</strong>, predict: which atom loses an electron, and what charge does each become? Then press <strong>Transfer the electron</strong> and check. Draw K and Cl before and after, label each charge, and write one sentence on why they attract.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 300);
+    let phase = 'before', t = 0;
+    const Kx = 150, Cx = 372, cy = 150;
+    const btn = el('button',{class:'primary',html:'Transfer the electron '+ICON.right});
+    const status = el('div',{class:'status-line'});
+    function setStatus(){ status.innerHTML = phase==='before'
+      ? 'Potassium holds <strong>1</strong> outer electron. Chlorine needs <strong>1</strong> more to fill its shell.'
+      : phase==='after'
+      ? 'Transfer done: <strong style="color:#d97706">K<sup style="font-size:0.68em">+</sup></strong> and <strong style="color:#0d9488">Cl<sup style="font-size:0.68em">–</sup></strong> now attract, that pull is the ionic bond.'
+      : 'The electron jumps from potassium to chlorine...'; }
+    btn.addEventListener('click',()=>{ if(phase==='before'){ phase='moving'; t=0; btn.disabled=true; setStatus(); } });
+    const replay = el('button',{html:'Replay '+ICON.replay});
+    replay.addEventListener('click',()=>{ phase='before'; t=0; btn.disabled=false; setStatus(); });
+    function atom(cx, r, label, dots, chargeLabel, chargeCol) {
+      // body
+      const g = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, 2, cx, cy, r);
+      g.addColorStop(0,'#eef2ff'); g.addColorStop(1,'#c7d2fe');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#a5b4fc'; ctx.lineWidth = 2; ctx.setLineDash([3,6]); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#3730a3'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font='700 26px Roboto Serif, serif'; ctx.fillText(label, cx, cy);
+      if (chargeLabel){ ctx.fillStyle=chargeCol; ctx.font='700 18px Roboto Mono, monospace'; ctx.fillText(chargeLabel, cx+r*0.62, cy-r*0.62); }
+      // valence electrons on the ring
+      dots.forEach(a => { const ex=cx+Math.cos(a)*r, ey=cy+Math.sin(a)*r;
+        ctx.fillStyle='#6366f1'; ctx.beginPath(); ctx.arc(ex,ey,5,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#fff'; ctx.font='700 8px Roboto Mono'; ctx.fillText('–',ex,ey); });
+    }
+    const clDots = [0.4,1.0,1.7,2.4,3.3,4.1,4.9]; // 7 electrons, gap near the K side (angle ~ pi)
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,300);
+      if (phase==='moving'){ t=Math.min(1,t+dt/900); if(t>=1){ phase='after'; setStatus(); } }
+      const merge = phase==='after' ? 1 : 0;
+      const kShift = merge*22, cShift = merge*-22;
+      // K atom (loses its electron once moving/after)
+      atom(Kx+kShift, 44, 'K', phase==='before'?[Math.PI*0.0]:[], phase==='after'?'+':'', '#d97706');
+      // Cl atom (gains the electron -> 8 when after)
+      const clNow = phase==='after' ? clDots.concat([Math.PI]) : clDots;
+      atom(Cx+cShift, 50, 'Cl', clNow, phase==='after'?'–':'', '#0d9488');
+      // flying electron during transfer
+      if (phase==='moving'){
+        const sx = Kx+44, sy = cy, tx = Cx-50, ty = cy;
+        const ex = sx+(tx-sx)*t, ey = sy+(ty-sy)*t - Math.sin(t*Math.PI)*38;
+        ctx.fillStyle='#6366f1'; ctx.beginPath(); ctx.arc(ex,ey,6,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#fff'; ctx.font='700 9px Roboto Mono'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('–',ex,ey);
+      }
+      // attraction bond line after
+      if (phase==='after'){
+        ctx.strokeStyle='rgba(168,85,247,0.55)'; ctx.lineWidth=2.5; ctx.setLineDash([2,5]);
+        ctx.beginPath(); ctx.moveTo(Kx+kShift+44, cy); ctx.lineTo(Cx+cShift-50, cy); ctx.stroke(); ctx.setLineDash([]);
+      }
+    };
+    stage.append(status, el('div',{class:'tool-row',style:'margin-top:2px'},[btn, replay]),
+      el('div',{class:'caption'},'Metal gives, nonmetal takes. Charged ions held together by attraction, not yet free to move.'));
+    setStatus();
+  }
+});
+
+// ---- Step 3: The Solid Lattice ----
+scenes.push({
+  step: 'Step 3: The Solid Lattice',
+  seeLabel: 'Solid KCl lattice',
+  heading: 'Step 3: The Solid Lattice',
+  notes: "In <strong>solid</strong> KCl, the K<sup style=\"font-size:0.68em\">+</sup> and Cl<sup style=\"font-size:0.68em\">–</sup> ions stack into a rigid, repeating <strong>lattice</strong>, held in place by strong attraction to their neighbors. They can <strong>vibrate</strong>, but they cannot travel through the solid. No charge can move across it, so <strong>solid KCl does not conduct</strong>.",
+  notebook: "<strong>Before you press Apply voltage</strong>, predict: can any ion break free and drift all the way to an electrode? Press it and watch. Draw the lattice, label a K<sup style=\"font-size:0.68em\">+</sup> and a Cl<sup style=\"font-size:0.68em\">–</sup>, and write why the charges can't flow.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 300);
+    let on = false, amp = 0;
+    const cols = 7, rows = 5, dx = 52, dy = 46, x0 = 130, y0 = 78;
+    const grid = [];
+    for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) grid.push({ kind:((r+c)%2===0)?'K':'Cl', hx:x0+c*dx, hy:y0+r*dy, ph:Math.random()*6.28 });
+    const status = el('div',{class:'status-line'});
+    function setStatus(){ status.innerHTML = on
+      ? 'Voltage on: the ions <strong>vibrate harder</strong> but stay locked in place. <strong>No current.</strong>'
+      : 'The ions sit in fixed lattice positions. Apply a voltage and watch.'; }
+    const btn = el('button',{class:'primary',html:'Apply voltage '+ICON.zap});
+    btn.addEventListener('click',()=>{ on=!on; btn.innerHTML=(on?'Remove voltage ':'Apply voltage ')+ICON.zap; setStatus(); });
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,300);
+      amp += ((on?1:0)-amp)*Math.min(1,dt/220);
+      // electrode plates
+      ctx.fillStyle = on?'#93c5fd':'#e2e8f0'; roundRect(ctx,86,60,10,190,4); ctx.fill();
+      ctx.fillStyle = on?'#fca5a5':'#e2e8f0'; roundRect(ctx,424,60,10,190,4); ctx.fill();
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='700 16px Roboto Mono';
+      ctx.fillStyle='#60a5fa'; ctx.fillText('–',91,48); ctx.fillStyle='#f87171'; ctx.fillText('+',429,48);
+      grid.forEach(p => { p.ph += dt*(0.006+0.02*amp);
+        const jx = Math.sin(p.ph)*(0.8+amp*2.6), jy = Math.cos(p.ph*1.2)*(0.8+amp*2.6);
+        drawIon(ctx, p.hx+jx, p.hy+jy, p.kind, 14);
+      });
+    };
+    stage.append(el('div',{class:'tool-row'},[btn]), status,
+      el('div',{class:'caption'},'A rigid grid held by attraction. Vibration is not the same as travelling.'));
+    setStatus();
+  }
+});
+
+// ---- Step 4: Conductivity Needs Free Charges ----
+scenes.push({
+  step: 'Step 4: Free Charges',
+  seeLabel: 'Metal vs. salt',
+  heading: 'Step 4: Conductivity Needs Free Charges',
+  notes: "Here is the big rule: a material conducts only if it has <strong>charged particles that are free to move</strong>. A <strong>metal</strong> wire conducts because it has free <strong>electrons</strong>. A salt conducts only once its <strong>ions</strong> are freed, by melting or dissolving. Same rule, two kinds of charge carrier: <strong>mobile charges = current</strong>.",
+  notebook: "<strong>Predict first</strong>: the salt on the right starts solid. Will it light its bulb? Press <strong>Melt the salt</strong> to free its ions and check. Write the rule in your own words: what does <strong>every</strong> conductor need?",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 300);
+    let melted = false, sBright = 0;
+    // metal side electrons
+    const els = []; for (let i=0;i<7;i++) els.push({ p:i/7 });
+    // salt side ions
+    let salt = [];
+    function layoutSalt(){ salt=[]; if(!melted){ const c=4,r=4,x0=320,y0=150,dx=34,dy=30; for(let i=0;i<r;i++)for(let j=0;j<c;j++) salt.push({kind:((i+j)%2===0)?'K':'Cl',hx:x0+j*dx,hy:y0+i*dy,x:x0+j*dx,y:y0+i*dy,ph:Math.random()*6.28}); } else { for(let i=0;i<7;i++){ salt.push(fs('K')); salt.push(fs('Cl')); } } }
+    function fs(kind){ return {kind,x:300+Math.random()*130,y:135+Math.random()*95,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5}; }
+    const status = el('div',{class:'status-line'});
+    function setStatus(){ status.innerHTML = melted
+      ? 'Both light up. The metal moves <strong>electrons</strong>, the molten salt moves <strong>ions</strong>.'
+      : 'The metal conducts now. The <strong>solid salt cannot</strong>, its ions are still locked.'; }
+    const btn = el('button',{class:'primary',html:'Melt the salt '+ICON.heat});
+    btn.addEventListener('click',()=>{ melted=!melted; layoutSalt(); btn.innerHTML=(melted?'Freeze the salt ':'Melt the salt ')+ICON.heat; setStatus(); });
+    layoutSalt();
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,300);
+      sBright += ((melted?1:0)-sBright)*Math.min(1,dt/240);
+      // labels
+      ctx.textAlign='center'; ctx.font='700 11px Roboto Mono'; ctx.fillStyle='#57534e';
+      ctx.fillText('METAL WIRE', 135, 40); ctx.fillText('SALT (KCl)', 375, 40);
+      // metal panel bulb (always lit)
+      drawBulb(ctx, 135, 78, 1);
+      // metal wire with flowing electrons
+      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(60,150); ctx.lineTo(210,150); ctx.stroke();
+      ctx.fillStyle='#cbd5e1'; roundRect(ctx,60,142,150,16,5); ctx.globalAlpha=0.25; ctx.fill(); ctx.globalAlpha=1;
+      els.forEach(e => { e.p=(e.p+dt*0.00035)%1; const ex=60+e.p*150; ctx.fillStyle='#6366f1'; ctx.beginPath(); ctx.arc(ex,150,5,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='700 8px Roboto Mono'; ctx.textBaseline='middle'; ctx.fillText('–',ex,150); });
+      // salt panel bulb
+      drawBulb(ctx, 375, 78, sBright);
+      // salt beaker
+      ctx.fillStyle='#eef2f7'; roundRect(ctx,296,120,158,150,10); ctx.fill();
+      ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=2; roundRect(ctx,296,120,158,150,10); ctx.stroke();
+      const sb=[302,448,128,262];
+      salt.forEach(p => { if(!melted){ p.ph+=dt*0.01; drawIon(ctx,p.hx+Math.sin(p.ph)*1.6,p.hy+Math.cos(p.ph)*1.6,p.kind,12); } else { driftFree(p,dt,sb); drawIon(ctx,p.x,p.y,p.kind,12); } });
+    };
+    stage.append(el('div',{class:'tool-row'},[btn]), status,
+      el('div',{class:'caption'},'Electrons in a metal, ions in a salt. A conductor always needs charges that can move.'));
+    setStatus();
+  }
+});
+
+// ---- Step 5: Melting It (molten) ----
+scenes.push({
+  step: 'Step 5: Molten KCl',
+  seeLabel: 'Melting the lattice',
+  heading: 'Step 5: Melting Frees the Ions',
+  notes: "<strong>Heat</strong> makes the ions vibrate harder and harder. Past the <strong>melting point</strong>, the vibration overcomes the attraction holding the lattice together, and it collapses into a liquid of <strong>free-moving ions</strong>. Now the ions can drift to the electrodes, so <strong>molten KCl conducts</strong>.",
+  notebook: "<strong>Predict first</strong>: as KCl melts, what happens to its conductivity, and why? Slide the heat up, watch the lattice break, then close the circuit. Draw solid vs. molten KCl and label what is different about the ions.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 330);
+    let temp = 0, closed = false, bright = 0;
+    const cols = 5, rows = 4, dx = 32, dy = 30, x0 = 112, y0 = 170;
+    let ions = [];
+    function seed(){ ions=[]; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) ions.push({kind:((r+c)%2===0)?'K':'Cl',hx:x0+c*dx,hy:y0+r*dy,x:x0+c*dx,y:y0+r*dy,vx:0,vy:0,ph:Math.random()*6.28,freed:false}); }
+    seed();
+    const status = el('div',{class:'status-line'});
+    function setStatus(){ const molten = temp>0.6;
+      status.innerHTML = !molten
+        ? (temp>0.15?'Heating: the ions vibrate harder, but the lattice still holds.':'Solid KCl. Turn up the heat.')
+        : (closed?'Molten and conducting: <strong>free ions</strong> drift to the electrodes.':'Melted. The ions are <strong>free now</strong>, close the circuit to test.'); }
+    const slider = el('input',{type:'range',min:0,max:100,value:0,style:'flex:1;accent-color:#f59e0b'});
+    slider.addEventListener('input',()=>{ temp=+slider.value/100; if(temp<=0.6){ closed=false; closeBtn.disabled=true; } else closeBtn.disabled=false; setStatus(); });
+    const closeBtn = el('button',{class:'primary',html:'Close the circuit '+ICON.zap,disabled:''});
+    closeBtn.addEventListener('click',()=>{ closed=!closed; closeBtn.innerHTML=(closed?'Open the circuit ':'Close the circuit ')+ICON.zap; setStatus(); });
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,330);
+      const molten = temp>0.6;
+      bright += (((closed&&molten)?1:0)-bright)*Math.min(1,dt/260);
+      drawRig(ctx, bright, closed&&molten);
+      // heat glow at base
+      if (temp>0.05){ const gg=ctx.createLinearGradient(0,RIG.bkBot,0,RIG.bkBot-70); gg.addColorStop(0,`rgba(249,115,22,${0.10+0.28*temp})`); gg.addColorStop(1,'rgba(249,115,22,0)'); ctx.fillStyle=gg; roundRect(ctx,RIG.bkL+3,RIG.bkBot-72,RIG.bkR-RIG.bkL-6,70,10); ctx.fill(); }
+      const b=[RIG.sL+12,RIG.sR-12,RIG.sTop+10,RIG.sBot-10];
+      ions.forEach(p => {
+        if (!molten){ p.ph+=dt*(0.006+temp*0.03); const a=0.8+temp*3.2; drawIon(ctx,p.hx+Math.sin(p.ph)*a,p.hy+Math.cos(p.ph*1.2)*a,p.kind,12); if(p.freed){p.freed=false;p.x=p.hx;p.y=p.hy;} }
+        else { if(!p.freed){p.freed=true;p.vx=(Math.random()-.5)*1.5;p.vy=(Math.random()-.5)*1.5;} driftFree(p,dt,b,closed?(p.kind==='K'?RIG.lE:RIG.rE):null); drawIon(ctx,p.x,p.y,p.kind,12); }
+      });
+      // thermometer readout
+      ctx.textAlign='left'; ctx.font='700 11px Roboto Mono'; ctx.fillStyle= molten?'#ea580c':'#78716c';
+      ctx.fillText(molten?'MOLTEN':'SOLID', 24, 300);
+    };
+    stage.append(el('div',{class:'tool-row',style:'align-items:center;gap:12px'},[el('span',{class:'eyebrow-sm'},'Heat'), slider]),
+      el('div',{class:'tool-row',style:'margin-top:6px'},[closeBtn]), status,
+      el('div',{class:'caption'},'Heat beats the lattice attraction. Free ions can finally carry a current.'));
+    setStatus();
+  }
+});
+
+// ---- Step 6: Dissolving It (aqueous) ----
+scenes.push({
+  step: 'Step 6: Aqueous KCl',
+  seeLabel: 'Dissolving in water',
+  heading: 'Step 6: Water Frees the Ions',
+  notes: "When KCl <strong>dissolves</strong>, polar <strong>water molecules</strong> surround each ion and pull it off the lattice. The solid separates into free <strong>K<sup style=\"font-size:0.68em\">+</sup></strong> and <strong>Cl<sup style=\"font-size:0.68em\">–</sup></strong> ions spread through the water. This is <strong>dissociation</strong>: KCl(s) → K<sup style=\"font-size:0.68em\">+</sup>(aq) + Cl<sup style=\"font-size:0.68em\">–</sup>(aq). Free ions again, so <strong>aqueous KCl conducts</strong>.",
+  notebook: "<strong>Predict first</strong>: after KCl dissolves, are the ions still stuck together or free? Press <strong>Add water</strong>, watch the crystal break apart, then close the circuit. Write the dissociation equation and one sentence on what the water molecules do.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 330);
+    let dissolved = false, closed = false, bright = 0, prog = 0;
+    const cols = 5, rows = 4, dx = 30, dy = 28, x0 = 155, y0 = 180;
+    let ions = [];
+    function seed(){ ions=[]; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) ions.push({kind:((r+c)%2===0)?'K':'Cl',hx:x0+c*dx,hy:y0+r*dy,x:x0+c*dx,y:y0+r*dy,vx:0,vy:0,freed:false}); }
+    seed();
+    const waters = []; for(let i=0;i<14;i++) waters.push({x:RIG.sL+15+Math.random()*(RIG.sR-RIG.sL-30),y:RIG.sTop+12+Math.random()*(RIG.sBot-RIG.sTop-24),vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4});
+    const status = el('div',{class:'status-line'});
+    function setStatus(){ status.innerHTML = !dissolved
+      ? 'A solid crystal of KCl sits in the beaker. Add water to dissolve it.'
+      : (closed?'Dissolved and conducting: <strong>free K<sup style="font-size:0.68em">+</sup> and Cl<sup style="font-size:0.68em">–</sup></strong> carry the current.':'Dissolved: the ions are <strong>free in the water</strong>, close the circuit to test.'); }
+    const btn = el('button',{class:'primary',html:'Add water '+ICON.drop});
+    btn.addEventListener('click',()=>{ if(!dissolved){ dissolved=true; btn.disabled=true; closeBtn.disabled=false; setStatus(); } });
+    const closeBtn = el('button',{class:'primary',html:'Close the circuit '+ICON.zap,disabled:''});
+    closeBtn.addEventListener('click',()=>{ closed=!closed; closeBtn.innerHTML=(closed?'Open the circuit ':'Close the circuit ')+ICON.zap; setStatus(); });
+    const replay = el('button',{html:'Reset '+ICON.replay});
+    replay.addEventListener('click',()=>{ dissolved=false; closed=false; prog=0; seed(); btn.disabled=false; closeBtn.disabled=true; closeBtn.innerHTML='Close the circuit '+ICON.zap; setStatus(); });
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,330);
+      if (dissolved) prog = Math.min(1, prog + dt/1400);
+      bright += (((closed&&dissolved&&prog>0.6)?1:0)-bright)*Math.min(1,dt/260);
+      drawRig(ctx, bright, closed&&prog>0.6);
+      // water fill
+      ctx.fillStyle='rgba(147,197,253,0.20)'; roundRect(ctx,RIG.bkL+3,RIG.bkTop+34,RIG.bkR-RIG.bkL-6,RIG.bkBot-RIG.bkTop-37,10); ctx.fill();
+      const b=[RIG.sL+12,RIG.sR-12,RIG.sTop+10,RIG.sBot-10];
+      // water molecules drifting
+      waters.forEach(w => { driftFree(w,dt,b); drawWaterMol(ctx,w.x,w.y,0.6); });
+      ions.forEach(p => {
+        if (!dissolved){ drawIon(ctx,p.hx,p.hy,p.kind,12); }
+        else { if(!p.freed){ p.freed=true; p.vx=(Math.random()-.5)*1.2; p.vy=(Math.random()-.5)*1.2; }
+          // ease out of the lattice as prog rises
+          const tx=p.x, ty=p.y; driftFree(p,dt,b,closed&&prog>0.6?(p.kind==='K'?RIG.lE:RIG.rE):null);
+          p.x = p.hx + (p.x-p.hx)*Math.min(1,prog*1.4); p.y = p.hy + (p.y-p.hy)*Math.min(1,prog*1.4);
+          drawIon(ctx,p.x,p.y,p.kind,12);
+        }
+      });
+    };
+    stage.append(el('div',{class:'tool-row'},[btn, closeBtn, replay]), status,
+      el('div',{class:'caption'},'Water pulls the lattice apart into free ions, dissociation.'));
+    setStatus();
+  }
+});
+
+// ---- Step 7: Three States Side by Side (the lab data) ----
+scenes.push({
+  step: 'Step 7: The Lab Data',
+  seeLabel: 'Three states compared',
+  heading: 'Step 7: Three States, One Pattern',
+  notes: "Line the three states up and the pattern is clear. <strong>Solid</strong> = ions locked = <strong>no current</strong>. <strong>Molten</strong> and <strong>aqueous</strong> = ions free = <strong>current flows</strong>. The state of matter decides whether the ions can move, and that is the whole difference in your lab data.",
+  notebook: "<strong>Before you press Test all</strong>, fill in your lab table: predict High or None for solid, molten, and aqueous KCl. Then test and check. Fix any prediction you missed and write the one factor that decides conductivity.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 250);
+    let tested = false;
+    const panels = [
+      { name:'SOLID', x:88,  conduct:false, ions:[] },
+      { name:'MOLTEN', x:260, conduct:true,  ions:[] },
+      { name:'AQUEOUS', x:432, conduct:true, ions:[] }
+    ];
+    panels.forEach(pn => {
+      if (pn.name==='SOLID'){ const c=3,r=3,dx=26,dy=24,x0=pn.x-26,y0=120; for(let i=0;i<r;i++)for(let j=0;j<c;j++) pn.ions.push({kind:((i+j)%2===0)?'K':'Cl',hx:x0+j*dx,hy:y0+i*dy,ph:Math.random()*6.28}); }
+      else { for(let i=0;i<5;i++){ pn.ions.push(mk(pn,'K')); pn.ions.push(mk(pn,'Cl')); } }
+    });
+    function mk(pn,kind){ return {kind,x:pn.x-30+Math.random()*60,y:115+Math.random()*70,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5}; }
+    const bright = { SOLID:0, MOLTEN:0, AQUEOUS:0 };
+    const table = el('div');
+    function renderTable(){
+      table.innerHTML='';
+      const rows = [['Solid KCl', tested?'no':'?'],['Molten KCl', tested?'yes':'?'],['Aqueous KCl', tested?'yes':'?']];
+      const t = el('table',{class:'data'});
+      t.append(el('tr',{},[el('th',{},'Sample'),el('th',{},'Conductivity')]));
+      rows.forEach(([s,v])=>{ const cell = v==='?'?el('span',{style:'color:var(--textWarmMuted);font-family:var(--font-mono)'},'—')
+        : v==='yes'?el('span',{class:'tag-yes'},'High'):el('span',{class:'tag-no'},'None');
+        t.append(el('tr',{},[el('td',{class:'st'},s),el('td',{},cell)])); });
+      table.append(t);
+    }
+    const btn = el('button',{class:'primary',html:'Test all three '+ICON.zap});
+    btn.addEventListener('click',()=>{ tested=!tested; btn.innerHTML=(tested?'Reset ':'Test all three ')+(tested?ICON.replay:ICON.zap); renderTable(); });
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,250);
+      panels.forEach(pn => {
+        const lit = tested && pn.conduct;
+        bright[pn.name] += ((lit?1:0)-bright[pn.name])*Math.min(1,dt/240);
+        ctx.textAlign='center'; ctx.font='700 10px Roboto Mono'; ctx.fillStyle='#57534e'; ctx.fillText(pn.name, pn.x, 40);
+        drawBulb(ctx, pn.x, 72, bright[pn.name]);
+        // mini beaker
+        ctx.fillStyle='#eef2f7'; roundRect(ctx,pn.x-48,104,96,120,9); ctx.fill();
+        ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=2; roundRect(ctx,pn.x-48,104,96,120,9); ctx.stroke();
+        if (pn.name==='AQUEOUS'){ ctx.fillStyle='rgba(147,197,253,0.18)'; roundRect(ctx,pn.x-45,130,90,91,7); ctx.fill(); }
+        if (pn.name==='MOLTEN'){ ctx.fillStyle='rgba(249,115,22,0.12)'; roundRect(ctx,pn.x-45,130,90,91,7); ctx.fill(); }
+        const b=[pn.x-42,pn.x+42,112,216];
+        pn.ions.forEach(p => { if(pn.name==='SOLID'){ p.ph+=dt*0.009; drawIon(ctx,p.hx+Math.sin(p.ph)*1.4,p.hy+Math.cos(p.ph)*1.4,p.kind,10); } else { driftFree(p,dt,b,lit?(p.kind==='K'?pn.x-40:pn.x+40):null); drawIon(ctx,p.x,p.y,p.kind,10); } });
+      });
+    };
+    renderTable();
+    stage.append(el('div',{class:'tool-row'},[btn]), table,
+      el('div',{class:'caption'},'One factor decides it all: are the ions free to move?'));
+  }
+});
+
+// ---- Step 8: Ions Carry the Current ----
+scenes.push({
+  step: 'Step 8: Ions Carry the Current',
+  seeLabel: 'Ions at the electrodes',
+  heading: 'Step 8: The Ions Are the Current',
+  notes: "In molten or aqueous KCl, the moving <strong>ions themselves</strong> carry the charge. The positive <strong>K<sup style=\"font-size:0.68em\">+</sup></strong> ions are pulled to the <strong>negative</strong> electrode; the negative <strong>Cl<sup style=\"font-size:0.68em\">–</sup></strong> ions are pulled to the <strong>positive</strong> electrode. Opposite charges attract, and that steady drift of ions is the current.",
+  notebook: "<strong>Predict first</strong>: which electrode will K<sup style=\"font-size:0.68em\">+</sup> head toward, and which will Cl<sup style=\"font-size:0.68em\">–</sup> head toward? Watch and check. Draw the two electrodes, label + and –, and draw an arrow for each ion showing where it goes.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 290);
+    const negX = 92, posX = 428, top = 70, bot = 250;
+    let ions = []; for (let i=0;i<7;i++){ ions.push(sp('K')); ions.push(sp('Cl')); }
+    function sp(kind){ return { kind, x:200+Math.random()*120, y:top+15+Math.random()*(bot-top-30), vx:(Math.random()-.5)*.5, vy:(Math.random()-.5)*.5 }; }
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,290);
+      // electrodes
+      ctx.fillStyle='#60a5fa'; roundRect(ctx,negX-8,top,16,bot-top,5); ctx.fill();
+      ctx.fillStyle='#f87171'; roundRect(ctx,posX-8,top,16,bot-top,5); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='700 20px Roboto Mono';
+      ctx.fillText('–',negX,top-16); ctx.fillText('+',posX,top-16);
+      ctx.fillStyle='#57534e'; ctx.font='700 10px Roboto Mono';
+      ctx.fillText('CATHODE', negX, bot+18); ctx.fillText('ANODE', posX, bot+18);
+      const b=[negX+16,posX-16,top+10,bot-10];
+      ions.forEach(p => {
+        const tx = p.kind==='K' ? negX+22 : posX-22;
+        driftFree(p, dt, b, tx);
+        // recycle when it reaches its electrode
+        if ((p.kind==='K' && p.x < negX+30) || (p.kind==='Cl' && p.x > posX-30)) { p.x = 230+Math.random()*60; p.y=top+15+Math.random()*(bot-top-30); p.vx=0; p.vy=0; }
+        drawIon(ctx, p.x, p.y, p.kind, 13);
+      });
+    };
+    stage.append(
+      el('div',{class:'tool-row',style:'gap:20px'},[
+        el('span',{class:'status-line',style:'min-height:0',html:'<strong style="color:#d97706">K<sup style="font-size:0.68em">+</sup></strong> → negative (cathode)'}),
+        el('span',{class:'status-line',style:'min-height:0',html:'<strong style="color:#0d9488">Cl<sup style="font-size:0.68em">–</sup></strong> → positive (anode)'})
+      ]),
+      el('div',{class:'caption'},'No metal here, the ions do the travelling. Their drift is the electric current.'));
+  }
+});
+
+// ---- Step 9: The Heart Scenario (medical payoff) ----
+scenes.push({
+  step: 'Step 9: The Heart Scenario',
+  seeLabel: 'KCl and the heartbeat',
+  heading: 'Step 9: Why State Matters to a Heart',
+  notes: "A heartbeat runs on the careful, controlled movement of <strong>ions</strong> (especially K<sup style=\"font-size:0.68em\">+</sup>) across heart-cell membranes. <strong>Aqueous</strong> KCl delivers a flood of <strong>free K<sup style=\"font-size:0.68em\">+</sup> ions</strong> that overwhelms that control and can stop the rhythm, which is why medical potassium is dosed so carefully. A <strong>solid</strong> crystal releases no free ions, so it cannot. Same compound, different state, different effect.",
+  notebook: "<strong>Predict first</strong>: which form of KCl could disrupt the heartbeat, solid crystal or dissolved solution? Test both and watch the trace. Then answer the lab's challenge in your notebook: why does state change the medical effect?",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 300);
+    let mode = 'none', disrupt = 0, tw = 0;
+    const status = el('div',{class:'status-line'});
+    function setStatus(){ status.innerHTML = mode==='solid'
+      ? 'Solid KCl crystal: <strong>no free ions released</strong>, the rhythm stays steady.'
+      : mode==='aq'
+      ? 'KCl solution: a flood of <strong>free K<sup style="font-size:0.68em">+</sup></strong> disrupts the heart’s controlled ion movement.'
+      : 'Choose a form of KCl to apply, then watch the heart trace.'; }
+    const chips = el('div',{class:'tool-row'},[
+      el('button',{class:'chip',onclick(){ mode='solid'; setStatus(); markActive('solid'); }},'Solid KCl crystal'),
+      el('button',{class:'chip',onclick(){ mode='aq'; setStatus(); markActive('aq'); }},'KCl solution (IV)')
+    ]);
+    function markActive(m){ chips.querySelectorAll('.chip').forEach((c,i)=>c.classList.toggle('active',(i===0)===(m==='solid'))); }
+    // repeating heartbeat waveform sample
+    function beat(ph){ // ph 0..1, active heartbeat compressed into the first ~65%
+      if (ph<0.10) return Math.sin(ph/0.10*Math.PI)*0.14;      // P
+      if (ph<0.15) return -(ph-0.10)/0.05*0.28;                 // Q dip
+      if (ph<0.20) return ((ph-0.15)/0.05)*1.05 - 0.28;         // R up
+      if (ph<0.25) return 1.05 - ((ph-0.20)/0.05)*1.40;         // R down to -0.35 (S)
+      if (ph<0.30) return -0.35 + ((ph-0.25)/0.05)*0.35;        // back to 0
+      if (ph<0.55) return Math.sin((ph-0.30)/0.25*Math.PI)*0.24;// T wave
+      return 0;                                                 // baseline
+    }
+    const DZ = 0.45; // disruption threshold for color / label
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,300);
+      const target = mode==='aq'?1:0;
+      disrupt += (target-disrupt)*Math.min(1,dt/450);
+      tw += dt*0.0022;
+      const ph = (tw % 1);
+      // monitor panel
+      ctx.fillStyle='#0f172a'; roundRect(ctx,30,60,460,150,12); ctx.fill();
+      ctx.strokeStyle='#1e293b'; ctx.lineWidth=1;
+      for(let gx=30;gx<=490;gx+=38){ ctx.beginPath(); ctx.moveTo(gx,60); ctx.lineTo(gx,210); ctx.stroke(); }
+      for(let gy=60;gy<=210;gy+=30){ ctx.beginPath(); ctx.moveTo(30,gy); ctx.lineTo(490,gy); ctx.stroke(); }
+      // trace line, rendered directly from the time base so it is frame-rate independent
+      const midY=135, amp=54, N=150, stepPh=0.024;
+      ctx.strokeStyle = disrupt>DZ?'#f87171':'#34d399'; ctx.lineWidth=2.4; ctx.lineJoin='round'; ctx.beginPath();
+      for(let i=0;i<N;i++){
+        const x = 30 + i*(460/(N-1));
+        const tp = tw - (N-1-i)*stepPh;
+        const p = ((tp % 1) + 1) % 1;
+        let v = beat(p)*(1-disrupt);
+        if (disrupt>0.15 && disrupt<0.85) v += (Math.random()-0.5)*0.8*Math.sin(disrupt*Math.PI);
+        const y = midY - v*amp;
+        i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+      }
+      ctx.stroke();
+      // heart icon (beats while steady, still + red once disrupted)
+      ctx.save(); ctx.translate(455,44); const s=disrupt>DZ?1:1+Math.max(0,beat(ph))*0.18;
+      ctx.scale(s,s); ctx.fillStyle=disrupt>DZ?'#f87171':'#34d399';
+      ctx.beginPath(); ctx.moveTo(0,4); ctx.bezierCurveTo(-9,-6,-16,4,0,16); ctx.bezierCurveTo(16,4,9,-6,0,4); ctx.fill(); ctx.restore();
+      // free K+ flooding in when solution is applied
+      if (disrupt>0.05){ for(let i=0;i<Math.round(disrupt*6);i++){ const a=tw*2+i; drawIon(ctx,60+((i*70+tw*40)%400),230+Math.sin(a)*6,'K',9); } }
+      ctx.fillStyle=disrupt>DZ?'#b91c1c':'#166534'; ctx.textAlign='center'; ctx.font='700 11px Roboto Mono';
+      ctx.fillText(disrupt>DZ?'RHYTHM DISRUPTED':'STEADY RHYTHM', 260, 232);
+    };
+    stage.append(chips, status,
+      el('div',{class:'caption'},'The science of ions is also the science of the heartbeat. Handle potassium with care.'));
+    setStatus();
+  }
+});
+
+// ---- Step 10: Why Molten Behaves Like Aqueous ----
+scenes.push({
+  step: 'Step 10: Molten ≈ Aqueous',
+  seeLabel: 'Two ways to free ions',
+  heading: 'Step 10: Why Molten Acts Like Aqueous',
+  notes: "The lab asks: why does molten KCl conduct like aqueous KCl? Because both end up with the <strong>same thing</strong>, free-moving K<sup style=\"font-size:0.68em\">+</sup> and Cl<sup style=\"font-size:0.68em\">–</sup> ions. The <strong>cause</strong> differs (heat breaks the lattice vs. water pulls it apart), but the <strong>result</strong> is identical: mobile ions that conduct. It just is not the medical scenario, since we do not melt salt into a patient.",
+  notebook: "Make a two-column comparison. For <strong>molten</strong> and <strong>aqueous</strong> KCl, write what <strong>frees</strong> the ions and what the ions can <strong>do</strong>. Circle the part that is the <strong>same</strong> in both.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 290);
+    let m = []; for(let i=0;i<6;i++){ m.push(mk('K',60,240,'m')); m.push(mk('Cl',60,240,'m')); }
+    let a = []; for(let i=0;i<6;i++){ a.push(mk('K',280,460,'a')); a.push(mk('Cl',280,460,'a')); }
+    function mk(kind,l,r,tag){ return {kind,x:l+15+Math.random()*(r-l-30),y:95+Math.random()*130,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,tag}; }
+    const waters=[]; for(let i=0;i<10;i++) waters.push({x:295+Math.random()*150,y:95+Math.random()*130,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4});
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,290);
+      // two panels
+      ctx.fillStyle='rgba(249,115,22,0.10)'; roundRect(ctx,50,84,205,150,12); ctx.fill();
+      ctx.strokeStyle='#fdba74'; ctx.lineWidth=2; roundRect(ctx,50,84,205,150,12); ctx.stroke();
+      ctx.fillStyle='rgba(147,197,253,0.16)'; roundRect(ctx,270,84,205,150,12); ctx.fill();
+      ctx.strokeStyle='#93c5fd'; ctx.lineWidth=2; roundRect(ctx,270,84,205,150,12); ctx.stroke();
+      ctx.textAlign='center'; ctx.font='700 12px Roboto Mono'; ctx.fillStyle='#ea580c'; ctx.fillText('MOLTEN', 152, 62);
+      ctx.fillStyle='#2563eb'; ctx.fillText('AQUEOUS', 372, 62);
+      ctx.font='600 10px Inter'; ctx.fillStyle='#78716c'; ctx.fillText('freed by heat', 152, 78); ctx.fillText('freed by water', 372, 78);
+      drawBulb(ctx, 152, 40, 1); drawBulb(ctx, 372, 40, 1);
+      const bm=[62,243,96,222], ba=[282,463,96,222];
+      waters.forEach(w=>{ driftFree(w,dt,ba); drawWaterMol(ctx,w.x,w.y,0.55); });
+      m.forEach(p=>{ driftFree(p,dt,bm); drawIon(ctx,p.x,p.y,p.kind,12); });
+      a.forEach(p=>{ driftFree(p,dt,ba); drawIon(ctx,p.x,p.y,p.kind,12); });
+      // same-result banner
+      ctx.textAlign='center'; ctx.font='700 11px Roboto Mono'; ctx.fillStyle='#166534';
+      ctx.fillText('SAME RESULT: FREE IONS → CONDUCTS', 260, 258);
+    };
+    stage.append(el('div',{class:'caption',style:'margin-top:4px'},'Different cause, identical outcome. Free ions are free ions, however they got there.'));
+  }
+});
+
+// ---- Step 11: Practice ----
+scenes.push({
+  step: 'Step 11: Practice',
+  seeLabel: 'Practice questions',
+  heading: 'Step 11: Practice Questions',
+  notes: "Ten questions that pull the whole idea together. They alternate <strong>simple</strong> and <strong>challenge</strong>. Answer each one in your notebook first, then tap to reveal the solution and copy it down.",
+  notebook: "Number your page <strong>1 to 10</strong>. Answer each question <strong>before</strong> you reveal it, then copy the solution underneath and fix anything you missed.",
+  build(stage) {
+    const qs = [
+      { d:'Simple', q:'Which states of KCl conduct electricity, and which does not?',
+        a:'<strong>Molten and aqueous</strong> KCl conduct. <strong>Solid</strong> KCl does not. Only the states with free-moving ions can carry a current.' },
+      { d:'Challenge', q:'Solid KCl is made entirely of charged ions, yet it does not conduct. Explain why.',
+        a:'In the solid, the ions are <strong>locked in a rigid lattice</strong> and can only vibrate in place. Conduction needs charges that can <strong>travel</strong> through the material, and locked ions cannot, so no current flows.' },
+      { d:'Simple', q:'What must be true about the charged particles in a material for it to conduct electricity?',
+        a:'They must be <strong>free to move</strong>. Mobile charged particles (electrons in a metal, ions in a molten or dissolved salt) are what carry the current.' },
+      { d:'Challenge', q:'A student says melting KCl and dissolving KCl are "the same process." Do you agree? Explain.',
+        a:'Partly. Both <strong>free the ions</strong>, so both conduct, but the <strong>cause is different</strong>: melting uses heat to overcome the lattice attractions, while dissolving uses polar water molecules to pull the ions apart. Same result (mobile ions), different mechanism.' },
+      { d:'Simple', q:'In molten KCl, which particles move to carry the current?',
+        a:'The <strong>ions themselves</strong>, K<sup style="font-size:0.68em">+</sup> and Cl<sup style="font-size:0.68em">–</sup>. Unlike a metal, there are no free electrons; the drifting ions are the current.' },
+      { d:'Challenge', q:'When aqueous KCl conducts, which electrode does K<sup style="font-size:0.68em">+</sup> move toward, and why? Where does Cl<sup style="font-size:0.68em">–</sup> go?',
+        a:'K<sup style="font-size:0.68em">+</sup> moves to the <strong>negative electrode (cathode)</strong> because opposite charges attract. Cl<sup style="font-size:0.68em">–</sup> moves to the <strong>positive electrode (anode)</strong>.' },
+      { d:'Simple', q:'Write the equation for what happens when KCl dissolves in water (dissociation).',
+        a:'<strong>KCl(s) → K<sup style="font-size:0.68em">+</sup>(aq) + Cl<sup style="font-size:0.68em">–</sup>(aq).</strong> Water separates the solid into free, hydrated ions.' },
+      { d:'Challenge', q:'Why can a KCl solution stop a heart, but a solid KCl crystal (in the lab scenario) cannot? Answer in terms of ions.',
+        a:'A solution delivers <strong>free, mobile K<sup style="font-size:0.68em">+</sup> ions</strong> that flood the heart and disrupt its carefully controlled ion movement, which can stop the rhythm. In a solid crystal the ions are <strong>locked in the lattice</strong> and are not free to act, so it cannot.' },
+      { d:'Simple', q:'Rank solid, molten, and aqueous KCl from lowest to highest conductivity, based on your lab.',
+        a:'<strong>Solid (none)</strong> is lowest; <strong>molten and aqueous</strong> are both high. Solid < molten ≈ aqueous.' },
+      { d:'Challenge', q:'A different substance is a solid ionic compound. Predict its conductivity as a solid versus when melted, and justify using the mobile-ion idea.',
+        a:'As a <strong>solid</strong> it will <strong>not conduct</strong> (ions locked in a lattice). When <strong>melted</strong> it <strong>will conduct</strong> (ions freed and mobile). The reason is the same rule: conduction requires charged particles that are free to move.' }
+    ];
+    let done = 0;
+    const bar = el('div',{class:'pb-bar'},[el('div',{class:'pb-fill'})]);
+    const text = el('div',{class:'pb-text'}, `0 of ${qs.length} checked`);
+    qs.forEach((item,i) => {
+      const pill = el('span',{class:'diff-pill '+(item.d==='Simple'?'diff-simple':'diff-challenge')}, item.d);
+      const btn = el('button',{class:'reveal-btn'},'Solution');
+      const rev = el('div',{class:'reveal-content',hidden:'',html:item.a});
+      let open = false, counted = false;
+      const card = el('div',{class:'q-card'},[ el('div',{class:'q-head'},[el('span',{class:'q-num'},(i+1)+'.'), pill]), el('div',{class:'q-text',html:item.q}), btn, rev ]);
+      function toggle(){ open=!open; rev.toggleAttribute('hidden',!open); btn.textContent=open?'Hide':'Solution';
+        if(open && !counted){ counted=true; done++; bar.querySelector('.pb-fill').style.width=(done/qs.length*100)+'%';
+          text.textContent = done===qs.length?`All ${qs.length} checked`:`${done} of ${qs.length} checked`; text.classList.toggle('complete', done===qs.length); } }
+      btn.addEventListener('click',e=>{ e.stopPropagation(); toggle(); });
+      card.addEventListener('click',toggle);
+      stage.append(card);
+    });
+    stage.append(el('div',{class:'pb-progress'},[bar,text]));
+  }
+});
+
+// ---- Step 12: Your Questions (live class feed + word cloud) ----
+scenes.push({
+  step: 'Step 12: Your Questions',
+  seeLabel: 'Your questions',
+  heading: 'Step 12: What Are You Wondering?',
+  notes: "You have seen why solid KCl won’t conduct, how heat and water free its ions, and why a dissolved dose can reach a heart when a solid crystal cannot. Now turn it around. <strong>What are you still wondering?</strong> Your questions launch our next lesson.",
+  notebook: "Write <strong>at least 5 questions</strong> you still have in your notebook. Then type them here with your <strong>name and class</strong> and hit <strong>Submit</strong>. Watch the class’s questions and the word cloud build below.",
+  build(stage) {
+    const APP = 'Ionic Conductivity';
+    const TEACHER_CODE = 'sparky2026';
+    const inS = 'font-family:var(--font-sans);font-size:14px;padding:9px 12px;border:1px solid var(--borderColor);border-radius:9px;background:#fff;color:var(--textPrimary)';
+    const name = el('input',{type:'text',placeholder:'Your name',style:inS+';flex:2;min-width:0'});
+    const klass = el('input',{type:'text',placeholder:'Class / period',style:inS+';flex:1;min-width:0'});
+    stage.append(el('div',{style:'display:flex;gap:8px;margin-top:4px'},[name,klass]));
+    const inputs = [];
+    const wrap = el('div',{style:'display:flex;flex-direction:column;gap:8px;margin-top:8px'});
+    for (let i=0;i<5;i++){ const inp = el('input',{type:'text',placeholder:'I wonder...',style:inS+';flex:1;min-width:0'}); inputs.push(inp);
+      wrap.append(el('div',{style:'display:flex;align-items:center;gap:10px'},[ el('div',{class:'q-num',style:'min-width:20px'},(i+1)+'.'), inp ])); }
+    stage.append(wrap);
+    const btn = el('button',{class:'primary',style:'margin-top:2px'},'Submit my questions');
+    const msg = el('div',{class:'status-line',style:'text-align:left;min-height:0'});
+    stage.append(el('div',{style:'display:flex;align-items:center;gap:12px;margin-top:2px'},[btn, msg]));
+
+    const feed = el('div',{style:'flex:1 1 240px;min-width:0;max-height:210px;overflow:auto;border:1px solid var(--borderColor);border-radius:10px;background:#fff'});
+    const cloud = el('div',{style:'flex:1 1 240px;min-width:0;max-height:210px;overflow:auto;border:1px solid var(--borderColor);border-radius:10px;background:var(--bgMain);padding:10px;text-align:center;align-content:center'});
+    stage.append(el('div',{class:'eyebrow-sm',style:'margin-top:14px'},'What the class is wondering'));
+    stage.append(el('div',{style:'display:flex;flex-wrap:wrap;gap:12px;margin-top:6px'},[feed, cloud]));
+
+    const tParam = new URLSearchParams(location.search).get('teacher');
+    if (tParam === '1') { try { localStorage.setItem('classq_teacher','1'); } catch(e){} }
+    if (tParam === '0') { try { localStorage.removeItem('classq_teacher'); } catch(e){} }
+    let isTeacher = tParam === '1';
+    if (tParam !== '0') { try { isTeacher = isTeacher || localStorage.getItem('classq_teacher') === '1'; } catch(e){} }
+    if (isTeacher) {
+      const tCode = el('input',{type:'password',placeholder:'Teacher passcode',style:inS+';max-width:190px'});
+      const clearBtn = el('button',{style:'font-size:12px;padding:7px 12px;color:var(--accentRed);border:1px solid var(--borderColor);background:#fff'},'Clear all questions (teacher)');
+      const tMsg = el('div',{class:'status-line',style:'text-align:left;min-height:0;font-size:12px'});
+      let armed = false;
+      clearBtn.addEventListener('click', async () => {
+        if (tCode.value !== TEACHER_CODE) { tMsg.textContent = 'Wrong passcode.'; armed = false; return; }
+        if (!armed) { armed = true; tMsg.textContent = ''; clearBtn.textContent = 'Click again to clear ALL questions'; return; }
+        clearBtn.disabled = true; clearBtn.textContent = 'Clearing...';
+        try { await window.ClassQ.clear(APP); clearBtn.textContent = 'Cleared'; }
+        catch(e){ tMsg.textContent = 'Could not clear, try again.'; }
+        setTimeout(() => { armed = false; clearBtn.disabled = false; clearBtn.textContent = 'Clear all questions (teacher)'; }, 1500);
+      });
+      stage.append(el('div',{style:'display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap'},[tCode, clearBtn]), tMsg);
+    }
+
+    const STOP = new Set('the a an is are do does of to in on and or why what how when it they that this for with as be can will if so i we you my me their there not have has was were which at by from more than into out up down one two all some about us our your his her also it’s'.split(' '));
+    function paint(items){
+      feed.innerHTML='';
+      const qlist=[]; (items||[]).forEach(it => (it.questions||[]).forEach(q => { if(q) qlist.push({q, who:(it.name||'Anon'), kl:(it.klass||'')}); }));
+      if(!qlist.length){ feed.innerHTML='<div class="caption" style="padding:16px">Be the first: submit a question.</div>'; }
+      else qlist.forEach(r => feed.append(el('div',{style:'padding:8px 11px;border-bottom:1px solid var(--borderSubtle)'},[
+        el('div',{style:'font-size:13.5px;color:var(--textPrimary);line-height:1.4'}, r.q),
+        el('div',{style:'font-family:var(--font-mono);font-size:10px;color:var(--textWarmMuted);margin-top:2px'}, r.who + (r.kl?(' · '+r.kl):'')) ])));
+      const freq={}; (items||[]).forEach(it => (it.questions||[]).forEach(q => (q||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).forEach(w => { if(w.length>2 && !STOP.has(w)) freq[w]=(freq[w]||0)+1; })));
+      const words=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,36);
+      cloud.innerHTML='';
+      if(!words.length){ cloud.innerHTML='<div class="caption">Common words appear here as the class submits.</div>'; }
+      else { const max=words[0][1], pal=['#6366f1','#a855f7','#7c3aed','#4f46e5','#8b5cf6'];
+        words.forEach(([w,n],i)=> cloud.append(el('span',{style:`display:inline-block;margin:3px 7px;font-family:var(--font-sans);font-weight:700;line-height:1.05;font-size:${13+Math.round((n/max)*22)}px;color:${pal[i%pal.length]};opacity:${(0.55+0.45*(n/max)).toFixed(2)}`}, w))); }
+    }
+    paint([]);
+    function wireLive(){ if(window._qUnsub){ try{window._qUnsub();}catch(e){} window._qUnsub=null; } if(window.ClassQ){ window._qUnsub = window.ClassQ.subscribe(APP, paint); } }
+    if(window.ClassQ) wireLive(); else window.addEventListener('classq-ready', wireLive, {once:true});
+
+    const BAD=/\b(fuck|shit|bitch|damn|crap|ass|dick|piss)\b/i;
+    btn.addEventListener('click', async () => {
+      const qsv = inputs.map(i=>i.value.trim()).filter(Boolean);
+      if(!name.value.trim() || !klass.value.trim()){ msg.textContent='Add your name and class first.'; msg.classList.remove('complete'); return; }
+      if(!qsv.length){ msg.textContent='Type at least one question first.'; msg.classList.remove('complete'); return; }
+      if(BAD.test(name.value) || BAD.test(klass.value) || qsv.some(q=>BAD.test(q))){ msg.textContent='Keep it school-appropriate, please.'; msg.classList.remove('complete'); return; }
+      btn.disabled=true; btn.textContent='Submitting...'; msg.textContent='';
+      try {
+        if(!window.ClassQ) throw new Error('offline');
+        await window.ClassQ.submit({ app:APP, name:name.value.trim(), klass:klass.value.trim(), questions:qsv });
+        btn.textContent='Submitted'; msg.textContent = (window.ClassQ.mode==='live') ? 'Thanks! Added below for the class.' : 'Added below (demo mode on this device).'; msg.classList.add('complete');
+        inputs.forEach(i=>i.value='');
+      } catch(err){
+        btn.disabled=false; btn.textContent='Submit my questions';
+        msg.textContent='Could not submit, try again.'; msg.classList.remove('complete');
+      }
+    });
+  }
+});
+
+// =====================================================
+//  Nav controller
+// =====================================================
+const stageEl = $('#stage');
+const stageLabel = $('#stageLabel');
+const stepHeadingEl = $('#stepHeading');
+const notesEl = $('#notes');
+const notebookTextEl = $('#notebookText');
+const stepIndicator = $('#stepIndicator');
+const stepNumEl = $('#stepNum');
+const stepTitleEl = $('#stepTitle');
+const progressFill = $('#progressFill');
+const prevBtn = $('#prevBtn');
+const nextBtn = $('#nextBtn');
+const resetBtn = $('#resetBtn');
+let current = 0;
+const pad2 = n => n < 10 ? '0'+n : ''+n;
+
+function setScene(i) {
+  current = i;
+  currentTick = null;
+  if (window._qUnsub) { try { window._qUnsub(); } catch(e){} window._qUnsub = null; }
+  const s = scenes[i];
+  stageEl.innerHTML = '';
+  const shortTitle = s.heading.replace(/^Step \d+:\s*/, '');
+  stageLabel.textContent = s.seeLabel || 'What you see';
+  stepHeadingEl.textContent = 'Step ' + (i+1) + ': ' + shortTitle;
+  stepNumEl.textContent = 'Step ' + pad2(i+1);
+  stepTitleEl.textContent = shortTitle;
+  notesEl.innerHTML = s.notes;
+  notebookTextEl.innerHTML = s.notebook;
+  stepIndicator.textContent = `${pad2(i+1)} / ${pad2(scenes.length)}`;
+  progressFill.style.width = ((i+1)/scenes.length*100) + '%';
+  prevBtn.disabled = i === 0;
+  nextBtn.disabled = i === scenes.length-1;
+  nextBtn.innerHTML = i === scenes.length-1 ? 'Done' : 'Next ' + ICON.right;
+  s.build(stageEl);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+prevBtn.addEventListener('click', () => { if (current>0) setScene(current-1); });
+nextBtn.addEventListener('click', () => { if (current<scenes.length-1) setScene(current+1); });
+resetBtn.addEventListener('click', () => setScene(0));
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight' && current<scenes.length-1) setScene(current+1);
+  if (e.key === 'ArrowLeft' && current>0) setScene(current-1);
+});
+
+setScene(0);
+</script>
+<script type="module">
+/* ===== Class Questions collector =====
+   Paste your Firebase web config below to turn on the SHARED, live, persistent class feed
+   (one Firebase project can collect every app; rows are tagged by `app`).
+   Leave the PASTE_ values to run in local DEMO mode (this browser only) so the UI still works. */
+const firebaseConfig = {
+  apiKey: "PASTE_FIREBASE_apiKey",
+  authDomain: "PASTE_FIREBASE_authDomain",
+  projectId: "PASTE_FIREBASE_projectId",
+  appId: "PASTE_FIREBASE_appId"
+};
+const configured = !JSON.stringify(firebaseConfig).includes('PASTE_');
+const listeners = {}, key = a => 'classq:' + a;
+const readLocal = a => { try { return JSON.parse(localStorage.getItem(key(a)) || '[]'); } catch(e){ return []; } };
+const notifyLocal = a => (listeners[a]||[]).forEach(cb => cb(readLocal(a)));
+function setLocal(){
+  window.ClassQ = {
+    mode: 'demo',
+    async submit(p){ const r={app:p.app,name:p.name||'',klass:p.klass||'',questions:p.questions||[],created:Date.now()}; const arr=readLocal(r.app); arr.unshift(r); localStorage.setItem(key(r.app), JSON.stringify(arr.slice(0,300))); notifyLocal(r.app); },
+    subscribe(a,cb){ (listeners[a]=listeners[a]||[]).push(cb); cb(readLocal(a)); return ()=>{ listeners[a]=(listeners[a]||[]).filter(x=>x!==cb); }; },
+    async clear(a){ localStorage.removeItem(key(a)); notifyLocal(a); }
+  };
+}
+async function init(){
+  if (!configured) { setLocal(); }
+  else {
+    try {
+      const appMod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const fs = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const db = fs.getFirestore(appMod.initializeApp(firebaseConfig));
+      window.ClassQ = {
+        mode: 'live',
+        async submit(p){ await fs.addDoc(fs.collection(db,'questions'), {app:p.app,name:p.name||'',klass:p.klass||'',questions:p.questions||[],created:Date.now()}); },
+        subscribe(a,cb){ const qy=fs.query(fs.collection(db,'questions'), fs.where('app','==',a), fs.limit(400));
+          return fs.onSnapshot(qy, snap=>{ const list=[]; snap.forEach(d=>list.push(d.data())); list.sort((x,y)=>(y.created||0)-(x.created||0)); cb(list); }, ()=>cb([])); },
+        async clear(a){ const snap=await fs.getDocs(fs.query(fs.collection(db,'questions'), fs.where('app','==',a))); for (const dd of snap.docs){ await fs.deleteDoc(dd.ref); } }
+      };
+    } catch(e){ setLocal(); }
+  }
+  window.dispatchEvent(new Event('classq-ready'));
+}
+init();
+</script>
+</body>
+</html>
